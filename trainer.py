@@ -186,6 +186,7 @@ class GTA(object):
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
                     equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
+                    equalise_cls_loss=torch.mean(equalise_cls_loss) * self.nclasses
                     errD += equalise_cls_loss*self.class_balance
                 errD.backward(retain_graph=True)    
                 self.optimizerD.step()
@@ -228,6 +229,7 @@ class GTA(object):
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
                     equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
+                    equalise_cls_loss=torch.mean(equalise_cls_loss) * self.nclasses
                     errF += equalise_cls_loss*self.class_balance
 
                 errF.backward()
