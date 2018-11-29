@@ -175,7 +175,7 @@ class GTA(object):
                 #TODO add CBL to D loss
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / n_classes))
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / self.nclasses))
                     errD += equalise_cls_loss*self.class_balance
                 errD.backward(retain_graph=True)    
                 self.optimizerD.step()
@@ -217,7 +217,7 @@ class GTA(object):
                 errF = errF_fromC + errF_src_fromD + errF_tgt_fromD
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / n_classes))
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / self.nclasses))
                     errF += equalise_cls_loss*self.class_balance
 
                 errF.backward()
