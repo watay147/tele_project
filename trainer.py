@@ -57,7 +57,8 @@ class GTA(object):
 
         self.class_balance=0.005
         self.uniform_cls_distribution=torch.ones(self.nclasses)*float(1.0 / self.nclasses)
-
+        if self.opt.gpu>=0:
+            self.uniform_cls_distribution=self.uniform_cls_distribution.cuda()
     """
     Validation function
     """
