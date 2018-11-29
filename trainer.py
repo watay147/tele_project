@@ -56,6 +56,7 @@ class GTA(object):
         self.fake_label_val = 0
 
         self.class_balance=0.005
+        self.uniform_cls_distribution=torch.ones(self.nclasses)*float(1.0 / self.nclasses)
 
     """
     Validation function
@@ -175,7 +176,7 @@ class GTA(object):
                 #TODO add CBL to D loss
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / self.nclasses))
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, self.uniform_cls_distribution)
                     errD += equalise_cls_loss*self.class_balance
                 errD.backward(retain_graph=True)    
                 self.optimizerD.step()
@@ -217,7 +218,7 @@ class GTA(object):
                 errF = errF_fromC + errF_src_fromD + errF_tgt_fromD
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / self.nclasses))
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, self.uniform_cls_distribution)
                     errF += equalise_cls_loss*self.class_balance
 
                 errF.backward()
