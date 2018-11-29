@@ -55,6 +55,8 @@ class GTA(object):
         self.real_label_val = 1
         self.fake_label_val = 0
 
+        self.class_balance=0.005
+
     """
     Validation function
     """
@@ -170,6 +172,11 @@ class GTA(object):
                 errD_tgt_fake_s = self.criterion_s(tgt_fakeoutputD_s, fakelabelv)
 
                 errD = errD_src_real_c + errD_src_real_s + errD_src_fake_s + errD_tgt_fake_s
+                #TODO add CBL to D loss
+                if self.class_balance>0.0:
+                    avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / n_classes))
+                    errD += equalise_cls_loss*self.class_balance
                 errD.backward(retain_graph=True)    
                 self.optimizerD.step()
                 
@@ -203,9 +210,16 @@ class GTA(object):
                 errF_src_fromD = self.criterion_c(src_fakeoutputD_c, src_labelsv)*(self.opt.adv_weight)
 
                 tgt_fakeoutputD_s, tgt_fakeoutputD_c = self.netD(tgt_gen)
+
+                #TODO add CBL to D gradient
                 errF_tgt_fromD = self.criterion_s(tgt_fakeoutputD_s, reallabelv)*(self.opt.adv_weight*self.opt.alpha)
                 
                 errF = errF_fromC + errF_src_fromD + errF_tgt_fromD
+                if self.class_balance>0.0:
+                    avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
+                    equalise_cls_loss = self.criterion_s(avg_cls_prob, float(1.0 / n_classes))
+                    errF += equalise_cls_loss*self.class_balance
+
                 errF.backward()
                 self.optimizerF.step()        
                 
