@@ -8,6 +8,13 @@ import numpy as np
 import models
 import utils
 
+
+
+def robust_binary_crossentropy(pred, tgt):
+    inv_tgt = -tgt + 1.0
+    inv_pred = -pred + 1.0 + 1e-6
+    return -(tgt * torch.log(pred + 1.0e-6) + inv_tgt * torch.log(inv_pred))
+
 class GTA(object):
 
     def __init__(self, opt, nclasses, mean, std, source_trainloader, source_valloader, targetloader):
@@ -57,6 +64,7 @@ class GTA(object):
 
         self.class_balance=0.005
         self.uniform_cls_distribution=torch.ones(self.nclasses)*float(1.0 / self.nclasses)
+        self.cls_bal_fn=robust_binary_crossentropy
         if self.opt.gpu>=0:
             self.uniform_cls_distribution=self.uniform_cls_distribution.cuda()
     """
@@ -177,7 +185,7 @@ class GTA(object):
                 #TODO add CBL to D loss
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, self.uniform_cls_distribution)
+                    equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
                     errD += equalise_cls_loss*self.class_balance
                 errD.backward(retain_graph=True)    
                 self.optimizerD.step()
@@ -219,7 +227,7 @@ class GTA(object):
                 errF = errF_fromC + errF_src_fromD + errF_tgt_fromD
                 if self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
-                    equalise_cls_loss = self.criterion_s(avg_cls_prob, self.uniform_cls_distribution)
+                    equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
                     errF += equalise_cls_loss*self.class_balance
 
                 errF.backward()
