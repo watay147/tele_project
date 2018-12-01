@@ -5,15 +5,25 @@ Implementation of "Generate To Adapt: Aligning Domains using Generative Adversar
 
 Please download the dataset from http://www.cs.umd.edu/~yogesh/datasets/digits.zip and extract it. This folder contains the dataset in the same format as need by our code.
 
+Cifar10 & STL10 dataset: https://drive.google.com/open?id=1kWpIt9W0XtU0p8V8om3MqOijurwmuLoU
+
 ## Training:
+### Dataset Selection
+
+1. svhn->mnist 
+2. mnist->svhn 
+3. cifar10->stl10 
+4. stl10->cifar10
+
+### Train
 
 Let us train the Lenet model for SVHN->MNIST Domain adaptation. Obtain the baseline numbers by running
 
-	python main.py --dataroot [path to the dataset] --method sourceonly
+	python main.py --dataselect 1 --dataroot [path to the dataset] --method sourceonly
 	
 To train our method(GTA), run
 
-	python main.py --dataroot [path to the dataset] --method GTA
+	python main.py --dataselect 1 --dataroot [path to the dataset] --method GTA
 
 This code trains and stores the trained models in result folder. Current checkpoint and the model that gives best performance on the validation set are stored.
 
@@ -21,7 +31,7 @@ This code trains and stores the trained models in result folder. Current checkpo
 
 To evaluate the trained models on the target domain (MNIST), run 
 
-	python eval.py --dataroot [path to the dataset] --method GTA --model_best False
+	python eval.py --dataselect 1 --dataroot [path to the dataset] --method GTA --model_best False
 	
 ## Citation:
 

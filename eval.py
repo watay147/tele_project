@@ -13,6 +13,7 @@ import argparse
 def main():
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dataselect', type=int, required=True, help='1. svhn->mnist 2. mnist->svhn 3. cifar10->stl10 4. stl10->cifar10')
     parser.add_argument('--dataroot', required=True, help='path to source dataset')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
@@ -26,6 +27,8 @@ def main():
     parser.add_argument('--model_best', type=int, default=0, help='Flag to specify whether to use the best validation model or last checkpoint| 1-model best, 0-current checkpoint')
 
     opt = parser.parse_args()
+    if opt.dataselect not in [1,2,3,4]:
+        exit('Please select the target and source dataset! \n 1. svhn->mnist 2. mnist->svhn 3. cifar10->stl10 4. stl10->cifar10')
 
     # GPU/CPU flags
     cudnn.benchmark = True
@@ -35,10 +38,21 @@ def main():
         os.environ['CUDA_VISIBLE_DEVICES'] = str(opt.gpu)
 
     # Creating data loaders
-    mean = np.array([0.44, 0.44, 0.44])
-    std = np.array([0.19, 0.19, 0.19])
+    if opt.dataselect in [1, 2]:
+        mean = np.array([0.44, 0.44, 0.44])
+        std = np.array([0.19, 0.19, 0.19])
+    else:
+        mean = np.array([0.4913997551666284, 0.48215855929893703, 0.4465309133731618])
+        std = np.array([0.24703225141799082, 0.24348516474564, 0.26158783926049628])
 
-    target_root = os.path.join(opt.dataroot, 'mnist/trainset')
+    if opt.dataselect == 1:
+        target_root = os.path.join(opt.dataroot, 'mnist/trainset')
+    elif opt.dataselect == 2:
+        target_root = os.path.join(opt.dataroot, 'svhn/trainset')
+    elif opt.dataselect == 3:
+        target_root = os.path.join(opt.dataroot, 'stl10/trainset')
+    elif opt.dataselect == 4:
+        target_root = os.path.join(opt.dataroot, 'cifar10/trainset')
 
     transform_target = transforms.Compose([transforms.Resize(opt.imageSize), transforms.ToTensor(), transforms.Normalize(mean,std)])
     target_test = dset.ImageFolder(root=target_root, transform=transform_target)
