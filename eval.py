@@ -46,13 +46,13 @@ def main():
         std = np.array([0.24703225141799082, 0.24348516474564, 0.26158783926049628])
 
     if opt.dataselect == 1:
-        target_root = os.path.join(opt.dataroot, 'mnist/testset')
+        target_root = os.path.join(opt.dataroot, 'mnist/trainset')
     elif opt.dataselect == 2:
-        target_root = os.path.join(opt.dataroot, 'svhn/testset')
+        target_root = os.path.join(opt.dataroot, 'svhn/trainset')
     elif opt.dataselect == 3:
-        target_root = os.path.join(opt.dataroot, 'stl10/testset')
+        target_root = os.path.join(opt.dataroot, 'stl10/trainset')
     elif opt.dataselect == 4:
-        target_root = os.path.join(opt.dataroot, 'cifar10/testset')
+        target_root = os.path.join(opt.dataroot, 'cifar10/trainset')
 
     transform_target = transforms.Compose([transforms.Resize(opt.imageSize), transforms.ToTensor(), transforms.Normalize(mean,std)])
     target_test = dset.ImageFolder(root=target_root, transform=transform_target)
