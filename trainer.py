@@ -18,7 +18,7 @@ def robust_binary_crossentropy(pred, tgt):
 
 class GTA(object):
 
-    def __init__(self, opt, nclasses, mean, std, source_trainloader, source_valloader, targetloader):
+    def __init__(self, opt, nclasses, mean, std, source_trainloader, source_valloader, targetloader, class_balance, augment):
 
         self.source_trainloader = source_trainloader
         self.source_valloader = source_valloader
@@ -63,7 +63,8 @@ class GTA(object):
         self.real_label_val = 1
         self.fake_label_val = 0
 
-        self.class_balance=0.005
+        self.augment = augment
+        self.class_balance=class_balance
         self.uniform_cls_distribution=torch.ones(self.nclasses)*float(1.0 / self.nclasses)
         self.cls_bal_fn=robust_binary_crossentropy
         if self.opt.gpu>=0:
@@ -182,14 +183,14 @@ class GTA(object):
                 
                 src_inputs, src_labels = datas
                 tgt_inputs, __ = datat       
-
-                if combine_batches:
-                        src_inputs, _, src_labels, tgt_inputs, _ = augment(src_inputs, src_labels, tgt_inputs)
-                else:
-                        src_inputs, src_labels, tgt_inputs, _ = augment(src_inputs.numpy(), src_labels.numpy(), tgt_inputs.numpy())
-                src_inputs = torch.FloatTensor(src_inputs)
-                src_labels = torch.LongTensor(src_labels)
-                tgt_inputs = torch.FloatTensor(tgt_inputs)
+                if self.augment:
+                    if combine_batches:
+                            src_inputs, _, src_labels, tgt_inputs, _ = augment(src_inputs, src_labels, tgt_inputs)
+                    else:
+                            src_inputs, src_labels, tgt_inputs, _ = augment(src_inputs.numpy(), src_labels.numpy(), tgt_inputs.numpy())
+                    src_inputs = torch.FloatTensor(src_inputs)
+                    src_labels = torch.LongTensor(src_labels)
+                    tgt_inputs = torch.FloatTensor(tgt_inputs)
 
                 src_inputs_unnorm = (((src_inputs*self.std[0]) + self.mean[0]) - 0.5)*2
 
