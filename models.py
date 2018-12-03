@@ -52,42 +52,47 @@ Discriminator network
 class _netD(nn.Module):
     def __init__(self, opt, nclasses):
         super(_netD, self).__init__()
-        
+
+        self.opt = opt
         self.ndf = opt.ndf
         self.feature = nn.Sequential(
-            nn.Conv2d(3, self.ndf, 3, 1, 1),            
+            nn.Conv2d(3, self.ndf, 3, 1, 1),
             nn.BatchNorm2d(self.ndf),
             nn.LeakyReLU(0.2, inplace=True),
             nn.MaxPool2d(2,2),
 
-            nn.Conv2d(self.ndf, self.ndf*2, 3, 1, 1),         
+            nn.Conv2d(self.ndf, self.ndf*2, 3, 1, 1),
             nn.BatchNorm2d(self.ndf*2),
             nn.LeakyReLU(0.2, inplace=True),
             nn.MaxPool2d(2,2),
-            
 
-            nn.Conv2d(self.ndf*2, self.ndf*4, 3, 1, 1),           
+
+            nn.Conv2d(self.ndf*2, self.ndf*4, 3, 1, 1),
             nn.BatchNorm2d(self.ndf*4),
             nn.LeakyReLU(0.2, inplace=True),
             nn.MaxPool2d(2,2),
-            
-            nn.Conv2d(self.ndf*4, self.ndf*2, 3, 1, 1),           
+
+            nn.Conv2d(self.ndf*4, self.ndf*2, 3, 1, 1),
             nn.BatchNorm2d(self.ndf*2),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.MaxPool2d(4,4)           
+            nn.MaxPool2d(4,4)
         )
 
-        self.classifier_c = nn.Sequential(nn.Linear(self.ndf*2, nclasses))              
         self.classifier_s = nn.Sequential(
-        						nn.Linear(self.ndf*2, 1), 
-        						nn.Sigmoid())              
+            nn.Linear(self.ndf*2, 1),
+            nn.Sigmoid())
+        if opt.auxLoss:
+            self.classifier_c = nn.Sequential(nn.Linear(self.ndf*2, nclasses))
 
-    def forward(self, input):       
+    def forward(self, input):
         output = self.feature(input)
         output_s = self.classifier_s(output.view(-1, self.ndf*2))
         output_s = output_s.view(-1)
-        output_c = self.classifier_c(output.view(-1, self.ndf*2))
-        return output_s, output_c
+        if self.opt.auxLoss:
+            output_c = self.classifier_c(output.view(-1, self.ndf*2))
+            return output_s, output_c
+        else:
+            return output_s, None
 
 """
 Feature extraction network

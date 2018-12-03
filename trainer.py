@@ -235,8 +235,9 @@ class GTA(object):
                 tgt_gen = self.netG(tgt_emb_cat)
 
                 src_realoutputD_s, src_realoutputD_c = self.netD(src_inputs_unnormv)   
-                errD_src_real_s = self.criterion_s(src_realoutputD_s, reallabelv) 
-                errD_src_real_c = self.criterion_c(src_realoutputD_c, src_labelsv) 
+                errD_src_real_s = self.criterion_s(src_realoutputD_s, reallabelv)
+                if self.opt.auxLoss:
+                    errD_src_real_c = self.criterion_c(src_realoutputD_c, src_labelsv)
 
                 src_fakeoutputD_s, src_fakeoutputD_c = self.netD(src_gen)
                 errD_src_fake_s = self.criterion_s(src_fakeoutputD_s, fakelabelv)
@@ -244,9 +245,11 @@ class GTA(object):
                 tgt_fakeoutputD_s, tgt_fakeoutputD_c = self.netD(tgt_gen)          
                 errD_tgt_fake_s = self.criterion_s(tgt_fakeoutputD_s, fakelabelv)
 
-                errD = errD_src_real_c + errD_src_real_s + errD_src_fake_s + errD_tgt_fake_s
+                errD = errD_src_real_s + errD_src_fake_s + errD_tgt_fake_s
+                if self.opt.auxLoss:
+                    errD += errD_src_real_c
                 #TODO add CBL to D loss
-                if self.class_balance>0.0:
+                if self.opt.auxLoss and self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
                     equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
                     equalise_cls_loss=torch.mean(equalise_cls_loss) * self.nclasses
@@ -259,9 +262,12 @@ class GTA(object):
                 
                 self.netG.zero_grad()       
                 src_fakeoutputD_s, src_fakeoutputD_c = self.netD(src_gen)
-                errG_c = self.criterion_c(src_fakeoutputD_c, src_labelsv)
                 errG_s = self.criterion_s(src_fakeoutputD_s, reallabelv)
-                errG = errG_c + errG_s
+                if self.opt.auxLoss:
+                    errG_c = self.criterion_c(src_fakeoutputD_c, src_labelsv)
+                errG = errG_s
+                if self.opt.auxLoss:
+                    errG += errG_c
                 errG.backward(retain_graph=True)
                 self.optimizerG.step()
                 
@@ -281,15 +287,18 @@ class GTA(object):
                 errF_fromC = self.criterion_c(outC, src_labelsv)        
 
                 src_fakeoutputD_s, src_fakeoutputD_c = self.netD(src_gen)
-                errF_src_fromD = self.criterion_c(src_fakeoutputD_c, src_labelsv)*(self.opt.adv_weight)
+                if self.opt.auxLoss:
+                    errF_src_fromD = self.criterion_c(src_fakeoutputD_c, src_labelsv)*(self.opt.adv_weight)
 
                 tgt_fakeoutputD_s, tgt_fakeoutputD_c = self.netD(tgt_gen)
 
                 #TODO add CBL to D gradient
                 errF_tgt_fromD = self.criterion_s(tgt_fakeoutputD_s, reallabelv)*(self.opt.adv_weight*self.opt.alpha)
                 
-                errF = errF_fromC + errF_src_fromD + errF_tgt_fromD
-                if self.class_balance>0.0:
+                errF = errF_fromC + errF_tgt_fromD
+                if self.opt.auxLoss:
+                    errF += errF_src_fromD
+                if self.opt.auxLoss and self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
                     equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
                     equalise_cls_loss=torch.mean(equalise_cls_loss) * self.nclasses
