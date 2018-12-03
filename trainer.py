@@ -83,7 +83,8 @@ class GTA(object):
             inputs, labels = datas         
             inputv, labelv = Variable(inputs.cuda(), requires_grad=True), Variable(labels.cuda()) 
 
-            outC, _, _ = self.netC(self.netF(inputv))
+            out_emd, _, _ = self.netF(inputv)
+            outC = self.netC(out_emd)
             _, predicted = torch.max(outC.data, 1)        
             total += labels.size(0)
             correct += ((predicted == labels.cuda()).sum())
