@@ -100,7 +100,8 @@ Feature extraction network
 class _netF(nn.Module):
     def __init__(self, opt):
         super(_netF, self).__init__()
-        
+
+        self.opt = opt
         self.ndf = opt.ndf
         self.feature = nn.Sequential(
             nn.Conv2d(3, self.ndf, 5, 1, 0),
@@ -114,10 +115,21 @@ class _netF(nn.Module):
             nn.Conv2d(self.ndf, self.ndf*2, 5, 1,0),
             nn.ReLU(inplace=True)
         )
+        if self.opt.vae:
+            self.mu = nn.Linear(self.ndf*2, self.ndf*2)
+            self.var = nn.Linear(self.ndf*2, self.ndf*2)
 
     def forward(self, input):   
         output = self.feature(input)
-        return output.view(-1, 2*self.ndf)
+        output = output.view(-1, 2*self.ndf)
+
+        if self.opt.vae:
+            mu = self.mu(output)
+            var = self.var(output)
+            std = torch.exp(0.5*var)
+            eps = torch.randn_like(std)
+            return eps.mul(std).add_(mu), mu, var
+        return output, None, None
 
 """
 Classifier network

@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--class_balance', type=float, required=True)
     parser.add_argument('--augmentation', type=int, required=True)
     parser.add_argument('--auxLoss', default=True, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--vae', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--kl_weight', type=float, default=0.0000001, help='Weight of KL penalty')
     parser.add_argument('--dataroot', required=True, help='path to source dataset')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--batchSize', type=int, default=100, help='input batch size')

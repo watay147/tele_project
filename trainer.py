@@ -10,7 +10,6 @@ import utils
 import augmentation
 
 
-
 def robust_binary_crossentropy(pred, tgt):
     inv_tgt = -tgt + 1.0
     inv_pred = -pred + 1.0 + 1e-6
@@ -226,11 +225,11 @@ class GTA(object):
                 # Updating D network
                 
                 self.netD.zero_grad()
-                src_emb = self.netF(src_inputsv)
+                src_emb, src_mu, src_var = self.netF(src_inputsv)
                 src_emb_cat = torch.cat((src_labels_onehotv, src_emb), 1)
                 src_gen = self.netG(src_emb_cat)
 
-                tgt_emb = self.netF(tgt_inputsv)
+                tgt_emb, tgt_mu, tgt_var = self.netF(tgt_inputsv)
                 tgt_emb_cat = torch.cat((tgt_labels_onehotv, tgt_emb),1)
                 tgt_gen = self.netG(tgt_emb_cat)
 
@@ -277,6 +276,9 @@ class GTA(object):
                 self.netC.zero_grad()
                 outC = self.netC(src_emb)   
                 errC = self.criterion_c(outC, src_labelsv)
+                if self.opt.vae:
+                    KLD = -0.5 * torch.sum(1 + src_var - src_mu.pow(2) - src_var.exp())
+                    errC = errC + self.opt.kl_weight * KLD
                 errC.backward(retain_graph=True)    
                 self.optimizerC.step()
 
@@ -298,6 +300,8 @@ class GTA(object):
                 errF = errF_fromC + errF_tgt_fromD
                 if self.opt.auxLoss:
                     errF += errF_src_fromD
+                if self.opt.vae:
+                    errF = errF + self.opt.kl_weight * KLD
                 if self.opt.auxLoss and self.class_balance>0.0:
                     avg_cls_prob = torch.mean(tgt_fakeoutputD_c, 0)
                     equalise_cls_loss = self.cls_bal_fn(avg_cls_prob, float(1.0 / self.nclasses))
