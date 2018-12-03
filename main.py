@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--dataselect', type=int, required=True, help='1. svhn->mnist 2. mnist->svhn 3. cifar10->stl10 4. stl10->cifar10')
     parser.add_argument('--class_balance', type=float, required=True)
     parser.add_argument('--augmentation', type=int, required=True)
+    parser.add_argument('--auxLoss', type=bool, default=True)
     parser.add_argument('--dataroot', required=True, help='path to source dataset')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
