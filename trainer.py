@@ -117,18 +117,18 @@ class GTA(object):
         fakelabelv = Variable(fakelabel) 
         
         # parameters
-        src_hflip = False
+        src_hflip = True
         src_xlat_range = 2.0
-        src_affine_std = 0.1
+        src_affine_std = 0.0
         src_intens_flip = False
         src_intens_scale_range_lower = -1.5
         src_intens_scale_range_upper = 1.5
         src_intens_offset_range_lower = -0.5
         src_intens_offset_range_upper = 0.5
         src_gaussian_noise_std = 0.1
-        tgt_hflip = False
+        tgt_hflip = True
         tgt_xlat_range = 2.0
-        tgt_affine_std = 0.1
+        tgt_affine_std = 0.0
         tgt_intens_flip = False
         tgt_intens_scale_range_lower = -1.5
         tgt_intens_scale_range_upper = 1.5
