@@ -15,6 +15,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataselect', type=int, required=True, help='1. svhn->mnist 2. mnist->svhn 3. cifar10->stl10 4. stl10->cifar10')
     parser.add_argument('--dataroot', required=True, help='path to source dataset')
+    parser.add_argument('--auxLoss', default=True, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--vae', default=False, type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument('--kl_weight', type=float, default=0.0000001, help='Weight of KL penalty')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
     parser.add_argument('--imageSize', type=int, default=32, help='the height / width of the input image to network')
@@ -100,11 +103,12 @@ def main():
 
     for i, datas in enumerate(targetloader):
         inputs, labels = datas
-        if opt.gpu>=0:
+        if opt.gpu >= 0:
             inputs, labels = inputs.cuda(), labels.cuda()
         inputv, labelv = Variable(inputs, volatile=True), Variable(labels)
 
-        outC = netC(netF(inputv))
+        outF, _, _ = netF(inputv)
+        outC = netC(outF)
         _, predicted = torch.max(outC.data, 1)        
         total += labels.size(0)
         correct += ((predicted == labels.cuda()).sum())
