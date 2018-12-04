@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import augmentation
 from torch.autograd import Variable
 
 """
@@ -98,11 +99,12 @@ class _netD(nn.Module):
 Feature extraction network
 """
 class _netF(nn.Module):
-    def __init__(self, opt):
+    def __init__(self, opt, augment):
         super(_netF, self).__init__()
 
         self.opt = opt
         self.ndf = opt.ndf
+        self.augment = augment
         self.feature = nn.Sequential(
             nn.Conv2d(3, self.ndf, 5, 1, 0),
             nn.ReLU(inplace=True),
@@ -119,7 +121,32 @@ class _netF(nn.Module):
             self.mu = nn.Linear(self.ndf*2, self.ndf*2)
             self.var = nn.Linear(self.ndf*2, self.ndf*2)
 
+        # parameters
+        src_hflip = False
+        src_xlat_range = 2.0
+        src_affine_std = 0.1
+        src_intens_flip = False
+        src_intens_scale_range_lower = -1.5
+        src_intens_scale_range_upper = 1.5
+        src_intens_offset_range_lower = -0.5
+        src_intens_offset_range_upper = 0.5
+        src_gaussian_noise_std = 0.1
+
+        # augmentation function
+        self.aug = augmentation.ImageAugmentation(
+            src_hflip, src_xlat_range, src_affine_std,
+            intens_flip=src_intens_flip,
+            intens_scale_range_lower=src_intens_scale_range_lower, intens_scale_range_upper=src_intens_scale_range_upper,
+            intens_offset_range_lower=src_intens_offset_range_lower,
+            intens_offset_range_upper=src_intens_offset_range_upper,
+            gaussian_noise_std=src_gaussian_noise_std
+        )
+
     def forward(self, input):   
+        if self.augment:
+            input, _ = self.aug.augment_pair(input.cpu().detach().numpy())
+            input = Variable(torch.FloatTensor(input).cuda())
+
         output = self.feature(input)
         output = output.view(-1, 2*self.ndf)
 

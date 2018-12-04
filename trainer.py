@@ -31,7 +31,7 @@ class GTA(object):
         self.nclasses = nclasses
         self.netG = models._netG(opt, nclasses)
         self.netD = models._netD(opt, nclasses)
-        self.netF = models._netF(opt)
+        self.netF = models._netF(opt, augment)
         self.netC = models._netC(opt, nclasses)
 
         # Weight initialization
@@ -116,58 +116,6 @@ class GTA(object):
         reallabelv = Variable(reallabel) 
         fakelabelv = Variable(fakelabel) 
         
-        # parameters
-        src_hflip = False
-        src_xlat_range = 2.0
-        src_affine_std = 0.1
-        src_intens_flip = False
-        src_intens_scale_range_lower = -1.5
-        src_intens_scale_range_upper = 1.5
-        src_intens_offset_range_lower = -0.5
-        src_intens_offset_range_upper = 0.5
-        src_gaussian_noise_std = 0.1
-        tgt_hflip = False
-        tgt_xlat_range = 2.0
-        tgt_affine_std = 0.1
-        tgt_intens_flip = False
-        tgt_intens_scale_range_lower = -1.5
-        tgt_intens_scale_range_upper = 1.5
-        tgt_intens_offset_range_lower = -0.5
-        tgt_intens_offset_range_upper = 0.5
-        tgt_gaussian_noise_std = 0.1
-
-        # augmentation function
-        src_aug = augmentation.ImageAugmentation(
-            src_hflip, src_xlat_range, src_affine_std,
-            intens_flip=src_intens_flip,
-            intens_scale_range_lower=src_intens_scale_range_lower, intens_scale_range_upper=src_intens_scale_range_upper,
-            intens_offset_range_lower=src_intens_offset_range_lower,
-            intens_offset_range_upper=src_intens_offset_range_upper,
-            gaussian_noise_std=src_gaussian_noise_std
-        )
-        tgt_aug = augmentation.ImageAugmentation(
-            tgt_hflip, tgt_xlat_range, tgt_affine_std,
-            intens_flip=tgt_intens_flip,
-            intens_scale_range_lower=tgt_intens_scale_range_lower, intens_scale_range_upper=tgt_intens_scale_range_upper,
-            intens_offset_range_lower=tgt_intens_offset_range_lower,
-            intens_offset_range_upper=tgt_intens_offset_range_upper,
-            gaussian_noise_std=tgt_gaussian_noise_std
-        )
-
-        combine_batches = False
-
-        if combine_batches:
-            def augment(X_sup, y_src, X_tgt):
-                X_src_stu, X_src_tea = src_aug.augment_pair(X_sup)
-                X_tgt_stu, X_tgt_tea = tgt_aug.augment_pair(X_tgt)
-                return X_src_stu, X_src_tea, y_src, X_tgt_stu, X_tgt_tea
-        else:
-            def augment(X_src, y_src, X_tgt):
-                X_src = src_aug.augment(X_src)
-                X_tgt_stu, X_tgt_tea = tgt_aug.augment_pair(X_tgt)
-                return X_src, y_src, X_tgt_stu, X_tgt_tea
-
-
         for epoch in range(self.opt.nepochs):
             
             self.netG.train()    
@@ -183,14 +131,6 @@ class GTA(object):
                 
                 src_inputs, src_labels = datas
                 tgt_inputs, __ = datat       
-                if self.augment:
-                    if combine_batches:
-                            src_inputs, _, src_labels, tgt_inputs, _ = augment(src_inputs, src_labels, tgt_inputs)
-                    else:
-                            src_inputs, src_labels, tgt_inputs, _ = augment(src_inputs.numpy(), src_labels.numpy(), tgt_inputs.numpy())
-                    src_inputs = torch.FloatTensor(src_inputs)
-                    src_labels = torch.LongTensor(src_labels)
-                    tgt_inputs = torch.FloatTensor(tgt_inputs)
 
                 src_inputs_unnorm = (((src_inputs*self.std[0]) + self.mean[0]) - 0.5)*2
 
